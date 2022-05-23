@@ -40,7 +40,7 @@ All of the container will be wrapping in a file named docker-compose.yml
 Look at the docker-compose.yml  code below:
 
 
-'''
+```
 version: '3.9'
 
 services:
@@ -104,19 +104,19 @@ services:
       - target_db
     restart: 
       unless-stopped    
-'''
+```
 
 To running this docker-compose.yml, you should git clone this repository first, after that run this following script:
 
-'''
+```
 docker-compose up
-'''
+```
 
 And than you can check the container on your terminal with command:
 
-'''
+```
 docker ps
-'''
+```
 
 ## Setup and Configuration
 
@@ -130,8 +130,7 @@ _second_ contaier will be target table with port **15433**
 
 To create the postgres container, we use this following script:
 
-'''
-
+```
 source_db:
     image: postgres:latest
     container_name: source_db
@@ -162,7 +161,7 @@ source_db:
       - ./pgsql/init_target.sql:/docker-entrypoint-initdb.d/init_target.sql
     restart: always
 
-'''
+```
 
 We determine the credential for both postgres db:
 
@@ -174,7 +173,7 @@ We determine the credential for both postgres db:
 
 Also, we use 'volume' to mount our container volume to host volume. In this case we will initiate data to this database using init.sql :
 
-'''
+```
 
 CREATE TABLE orders
 (
@@ -191,11 +190,13 @@ INSERT INTO orders(product_name, amount) VALUES
  ('Xiami Redmi Note', 40),
  ('Samsung Flip', 402)
 
+```
 
-'''
 
 And sql command to create table for target db
 
+
+```
 CREATE TABLE orders
 (
     id SERIAL NOT NULL PRIMARY KEY,
@@ -203,14 +204,14 @@ CREATE TABLE orders
     amount INT NOT NULL,
     order_date TIMESTAMP NOT NULL DEFAULT NOW()
 )
+```
 
-'''
 
 ### Airflow
 
 For this assesment, I use the airflow docker image from [puckle/docker-airflow] (https://hub.docker.com/r/puckel/docker-airflow/). For airflow we will use port 5884.
 
-'''
+```
 webserver:
     image: puckel/docker-airflow:latest
     container_name: airflow
@@ -227,71 +228,72 @@ webserver:
       interval: 30s
       timeout: 30s
       retries: 3
-'''
+```
 
 We can access airflow webserver in localhost using web browser
 
-'''
-http://localhost:5884
 
-'''
+```
+http://localhost:5884
+```
+
 
 ![airflow_front](assets/airflow_1.png)
 
+
 #### Create connection betwwen two database
 
-Before we make connection between database, we should to know HOSTIP, we can use script to get the IP:
+Before we make connection between database, we should to know HOST IP, we can use script to get the IP:
 
-'''
-
+```
 ifconfig | grep inet
+```
 
-'''
 
 After that, on airflow GUI, go to **Admin** tab and click **Connection**.
 
 We will create two connection, for Source_db and Target_db
 
 
-![airflow_2](assets/airflow 2.png)
+![airflow_2](assets/source_db.png)
 
-![airflow_3](assets/airflow 3.png)
+![airflow_3](assets/target_db.png)
 
-###Validate Data Transfer
 
-#### Check database
+### Check database
 Check the container ID with command
-'''
+
+```
 docker ps
+```
 
-'''
-
-![source_container](assets/Screenshot from 2022-05-23 17-17-33.png)
+![source_container](assets/1.png)
 
 And, acces the source_db container with command
 
-'''
+```
 docker exec -it (container_id) /bin/bash
 
-'''
+```
+
  ![sql source](assets/sql_source.png)
 
- from the picture above, we can see orders table already filled.
+ From the picture above, we can see orders table already filled.
 
  And then, do the same thing to check the target_db
 
  ![taget_db_empety](assets/target_db.png)
 
 
-As we can see, the taget_db still empety.
+As we can see, the taget_db still empty.
 
-#### Transfer the data
+
+### Transfer the data
 
 Now, we will transfer the data from source_db to target_db using airflow.
 To, transfer the data between to database, we decalare DAG (Directed Acyclic Graph) to collecting Tasks together, organized with dependencies and relationships to say how they should run.
 
-'''
-
+```
 from datetime import datetime, timedelta
 from airflow import DAG
 from airflow.operators.postgres_operator import PostgresOperator
@@ -332,9 +334,7 @@ with DAG(**dag_params, catchup=False) as dag:
     )
 
     start >> migration
-
-
-'''
+```
 
 We use standard decorator and passing dag into Python operator.
 
