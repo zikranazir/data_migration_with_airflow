@@ -1,0 +1,7 @@
+CREATE TABLE orders
+(
+    id SERIAL NOT NULL PRIMARY KEY,
+    product_name VARCHAR(250) NOT NULL,
+    amount INT NOT NULL,
+    order_date TIMESTAMP NOT NULL DEFAULT NOW()
+)

@@ -1,0 +1,63 @@
+version: '3.9'
+
+services:
+  source_db:
+    image: postgres:latest
+    container_name: source_db
+    environment:
+      - POSTGRES_USER=airflow
+      - POSTGRES_PASSWORD=airflow
+      - POSTGRES_DB=airflow
+    ports: 
+      - "15432:5432"
+    logging:
+      options:
+        max-size: 10m
+        max-file: "3"
+    volumes:
+      - ./pgsql/init.sql:/docker-entrypoint-initdb.d/init.sql
+    restart: always
+
+  target_db:
+    image: postgres:latest
+    container_name: target_db
+    environment:
+      - POSTGRES_USER=airflow
+      - POSTGRES_PASSWORD=airflow
+      - POSTGRES_DB=airflow
+    ports:
+      - "15433:5432"
+    volumes:
+      - ./pgsql/init_target.sql:/docker-entrypoint-initdb.d/init_target.sql
+    restart: always
+
+  webserver:
+    image: puckel/docker-airflow:latest
+    container_name: airflow
+    restart: always
+    depends_on:
+      - source_db
+      - target_db
+    volumes:
+      - ./dags:/usr/local/airflow/dags
+    ports:
+      - "5884:8080"
+    healthcheck:
+      test: ["CMD-SHELL", "[ -f /usr/local/airflow/airflow-webserver.pid ]"]
+      interval: 30s
+      timeout: 30s
+      retries: 3
+
+  pgadmin-compose:
+    image: dpage/pgadmin4
+    container_name: pgadmin
+    environment: 
+      PGADMIN_DEFAULT_EMAIL: "airflow@gmail.com"
+      PGADMIN_DEFAULT_PASSWORD: "airflow"
+    ports: 
+      - "16543:80"
+    depends_on: 
+      - source_db
+      - target_db
+    restart: 
+      unless-stopped    
